@@ -108,10 +108,10 @@ public class TimeRuleView extends View {
      * 可以组合优化成数组
      */
     private static int[] mUnitSeconds = {
-            10,     10,     10,     10,
-            60,     60,
-            5*60,   5*60,
-            15 * 60, 15 * 60, 15 * 60, 15 * 60, 15 * 60, 15 * 60
+            2 * 60,     2 * 60,     2 * 60,     2 * 60,
+            2 * 60,     2 * 60,
+            10 * 60,   10 * 60,
+            10 * 60, 10 * 60, 10 * 60, 10 * 60, 10 * 60, 10 * 60
     };
 
     /**
@@ -119,10 +119,10 @@ public class TimeRuleView extends View {
      */
     @SuppressWarnings("all")
     private static int[] mPerTextCounts = {
-            60,         60,         2 * 60,     4 * 60, // 10s/unit: 最大值, 1min, 2min, 4min
-            5 * 60,     10 * 60, // 1min/unit: 5min, 10min
-            20 * 60,    30 * 60, // 5min/unit: 20min, 30min
-            3600,       2 * 3600,   3 * 3600,   4 * 3600,   5 * 3600,   6 * 3600 // 15min/unit
+            10 * 60,    10 * 60,    10 * 60,    10 * 60, // 10s/unit: 最大值, 1min, 2min, 4min
+            10 * 60,    10 * 60, // 1min/unit: 5min, 10min
+            3600,       3600, // 5min/unit: 20min, 30min
+            3600,       3600,       3600,       3600,      3600,      3600 // 15min/unit
     };
 
     /**
@@ -133,10 +133,10 @@ public class TimeRuleView extends View {
      */
     @SuppressWarnings("all")
     private float[] mPerCountScaleThresholds = {
-            6f,     3.6f,   1.8f,   1.5f, // 10s/unit: 最大值, 1min, 2min, 4min
-            0.8f,     0.4f,   // 1min/unit: 5min, 10min
-            0.25f,  0.125f, // 5min/unit: 20min, 30min
-            0.07f,  0.04f,  0.03f,  0.025f, 0.02f,  0.015f // 15min/unit: 1h, 2h, 3h, 4h, 5h, 6h
+            1.0f,     0.9f,   0.8f,   0.7f, // 10s/unit: 最大值, 1min, 2min, 4min
+            0.65f,     0.6f,   // 1min/unit: 5min, 10min
+            0.55f,  0.5f, // 5min/unit: 20min, 30min
+            0.45f,  0.4f,  0.35f,  0.30f, 0.25f,  0.125f // 15min/unit: 1h, 2h, 3h, 4h, 5h, 6h
     };
     /**
      * 默认mScale为1
@@ -246,14 +246,14 @@ public class TimeRuleView extends View {
         bgColor = ta.getColor(R.styleable.TimeRuleView_zjun_bgColor, Color.parseColor("#EEEEEE"));
         gradationColor = ta.getColor(R.styleable.TimeRuleView_zjun_gradationColor, Color.GRAY);
         partHeight = ta.getDimension(R.styleable.TimeRuleView_trv_partHeight, dp2px(20));
-        partColor = ta.getColor(R.styleable.TimeRuleView_trv_partColor, Color.parseColor("#F58D24"));
+        partColor = ta.getColor(R.styleable.TimeRuleView_trv_partColor, Color.parseColor("#2AF58D24"));
         gradationWidth = ta.getDimension(R.styleable.TimeRuleView_trv_gradationWidth, 1);
         secondLen = ta.getDimension(R.styleable.TimeRuleView_trv_secondLen, dp2px(3));
         minuteLen = ta.getDimension(R.styleable.TimeRuleView_trv_minuteLen, dp2px(5));
         hourLen = ta.getDimension(R.styleable.TimeRuleView_trv_hourLen, dp2px(10));
         gradationTextColor = ta.getColor(R.styleable.TimeRuleView_trv_gradationTextColor, Color.GRAY);
         gradationTextSize = ta.getDimension(R.styleable.TimeRuleView_trv_gradationTextSize, sp2px(12));
-        gradationTextGap = ta.getDimension(R.styleable.TimeRuleView_trv_gradationTextGap, dp2px(2));
+        gradationTextGap = ta.getDimension(R.styleable.TimeRuleView_trv_gradationTextGap, dp2px(5));
         currentTime = ta.getInt(R.styleable.TimeRuleView_trv_currentTime, 0);
         indicatorTriangleSideLen = ta.getDimension(R.styleable.TimeRuleView_trv_indicatorTriangleSideLen, dp2px(15));
         indicatorWidth = ta.getDimension(R.styleable.TimeRuleView_zjun_indicatorLineWidth, dp2px(1));
@@ -383,6 +383,9 @@ public class TimeRuleView extends View {
         mHalfWidth = mWidth >> 1;
 
         setMeasuredDimension(mWidth, mHeight);
+
+        minuteLen = mHeight / 6;
+        hourLen = minuteLen * 2;
     }
 
     @Override
@@ -473,6 +476,9 @@ public class TimeRuleView extends View {
         // 背景
         canvas.drawColor(bgColor);
 
+        // 底边
+        canvas.drawLine(0, mHeight, mWidth, mHeight, mPaint);
+
         // 刻度
         drawRule(canvas);
 
@@ -497,7 +503,7 @@ public class TimeRuleView extends View {
     private void drawRule(Canvas canvas) {
         // 移动画布坐标系
         canvas.save();
-        canvas.translate(0, partHeight);
+//        canvas.translate(0, partHeight);
         mPaint.setColor(gradationColor);
         mPaint.setStrokeWidth(gradationWidth);
 
@@ -507,21 +513,18 @@ public class TimeRuleView extends View {
         final int perTextCount = mPerTextCounts[mPerTextCountIndex];
         while (start <= MAX_TIME_VALUE) {
             // 刻度
-            if (start % 3600 == 0) {
+            if (start % perTextCount == 0) {
                 // 时刻度
-                canvas.drawLine(offset, 0, offset, hourLen, mPaint);
+                canvas.drawLine(offset, mHeight, offset, mHeight - hourLen, mPaint);
             } else if (start % 60 == 0) {
                 // 分刻度
-                canvas.drawLine(offset, 0, offset, minuteLen, mPaint);
-            } else{
-                // 秒刻度
-                canvas.drawLine(offset, 0, offset, secondLen, mPaint);
+                canvas.drawLine(offset, mHeight, offset, mHeight - minuteLen, mPaint);
             }
 
             // 时间数值
             if (start % perTextCount == 0) {
                 String text = formatTimeHHmm(start);
-                canvas.drawText(text, offset - mTextHalfWidth, hourLen + gradationTextGap + gradationTextSize, mTextPaint);
+                canvas.drawText(text, offset - mTextHalfWidth, mHeight - hourLen - gradationTextGap, mTextPaint);
             }
 
             start += mUnitSecond;
@@ -538,20 +541,6 @@ public class TimeRuleView extends View {
         mPaint.setColor(indicatorColor);
         mPaint.setStrokeWidth(indicatorWidth);
         canvas.drawLine(mHalfWidth, 0, mHalfWidth, mHeight, mPaint);
-
-        // 正三角形
-        if (mTrianglePath.isEmpty()) {
-            //
-            final float halfSideLen = indicatorTriangleSideLen * .5f;
-            mTrianglePath.moveTo(mHalfWidth - halfSideLen, 0);
-            mTrianglePath.rLineTo(indicatorTriangleSideLen, 0);
-            mTrianglePath.rLineTo(-halfSideLen, (float) (Math.sin(Math.toRadians(60)) * halfSideLen));
-            mTrianglePath.close();
-        }
-        mPaint.setStrokeWidth(1);
-        mPaint.setStyle(Paint.Style.FILL);
-        canvas.drawPath(mTrianglePath, mPaint);
-        mPaint.setStyle(Paint.Style.STROKE);
     }
 
     /**
@@ -562,10 +551,10 @@ public class TimeRuleView extends View {
             return;
         }
         // 不用矩形，直接使用直线绘制
-        mPaint.setStrokeWidth(partHeight);
+        mPaint.setStrokeWidth(mHeight);
         mPaint.setColor(partColor);
         float start, end;
-        final float halfPartHeight = partHeight * .5f;
+        final float halfPartHeight = mHeight / 2;
         final float secondGap = mUnitGap / mUnitSecond;
         for (int i = 0, size = mTimePartList.size(); i < size; i++) {
             TimePart timePart = mTimePartList.get(i);
